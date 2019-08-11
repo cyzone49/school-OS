@@ -141,12 +141,14 @@ static void keyboard_isr()
 				/*debugPrint('i', 'r', "respond - default\n");
 				inBuffer[inBufIndx++] = inChar;
 				inBuffer[inBufIndx] = 0;*/
-				if (inBufIndx < INBUF_SIZE - 1) {					
+				if (inBufIndx < INBUF_SIZE - 1) 
+				{
 					printf("%c", inChar);
 					inBuffer[inBufIndx++] = inChar;
 					inBuffer[inBufIndx] = 0;
 				}
-				else {
+				else 
+				{
 					printf("\a");
 				}
 			}
@@ -195,7 +197,7 @@ static void timer_isr()
 	myClkTime = clock();
 	if ((myClkTime - myOldClkTime) >= ONE_TENTH_SEC) {
 		myOldClkTime = myOldClkTime + ONE_TENTH_SEC;   
-		//semSignal(tics10thsec);
+		semSignal(tics10thsec);
 	}
 
 	return;

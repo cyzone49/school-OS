@@ -1,4 +1,2 @@
-﻿  os345tasks.c
-C:\Users\Dat Vu\source\repos\os345\OS345\os345tasks.c(184,9): warning C4477:  'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'Semaphore **'
-C:\Users\Dat Vu\source\repos\os345\OS345\os345tasks.c(200,11): warning C4477:  'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'Semaphore **'
+﻿  os345p5.c
   OS345.vcxproj -> C:\Users\Dat Vu\source\repos\os345\Debug\OS345.exe

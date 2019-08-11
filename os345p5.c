@@ -23,6 +23,9 @@
 #include <assert.h>
 #include "os345.h"
 
+#include "pq.h"
+
+
 #define NUM_PARENTS			5
 #define NUM_REPORT_SECONDS	5
 
@@ -54,7 +57,7 @@ int P5_project5(int argc, char* argv[])		// project 5
 	char arg2[16];
 	char arg3[16];
 
-	static char* groupReportArgv[] = {"groupReport", "4"};
+	static char* groupReportArgv[] = { "groupReport", "4" };
 
 	// check if just changing scheduler mode
 	if (argc > 1)
@@ -82,7 +85,7 @@ int P5_project5(int argc, char* argv[])		// project 5
 
 		sprintf(arg1, "parent%d", i + 1);
 		sprintf(arg2, "%d", i + 1);
-//		sprintf(arg3, "%d", 1 + 4 * i);
+		//		sprintf(arg3, "%d", 1 + 4 * i);
 		sprintf(arg3, "%d", num_siblings[i]);
 		new_argv[0] = arg1;
 		new_argv[1] = arg2;
@@ -90,19 +93,19 @@ int P5_project5(int argc, char* argv[])		// project 5
 
 		printf("\nCreate %s with %d child%s", arg1, atoi(arg3), (atoi(arg3) == 1 ? "" : "ren"));
 		createTask(new_argv[0]				// task name
-				 , parentTask,				// parent task
-				   MED_PRIORITY,			// priority
-				   3,						// argc
-				   new_argv);				// argv
+			, parentTask,				// parent task
+			MED_PRIORITY,			// priority
+			3,						// argc
+			new_argv);				// argv
 		SEM_WAIT(parentDead);				// wait for parent to die
 	}
 
 	// create reporting task
-	createTask("Group Report"	,			// task name
-				groupReportTask,			// task
-				MED_PRIORITY,				// task priority
-				2,							// task argc
-				groupReportArgv);			// task argument pointers
+	createTask("Group Report",			// task name
+		groupReportTask,			// task
+		MED_PRIORITY,				// task priority
+		2,							// task argc
+		groupReportArgv);			// task argument pointers
 	return 0;
 } // end P5_project5
 
@@ -126,10 +129,10 @@ int parentTask(int argc, char* argv[])		// group 1
 	{
 		sprintf(buffer, "%s%d%c", "child_", atoi(argv[1]), i);
 		createTask(buffer,					// task name
-				childTask,					// task
-				MED_PRIORITY,				// priority
-				3,							// task argc
-				argv);						// task argument pointers
+			childTask,					// task
+			MED_PRIORITY,				// priority
+			3,							// task argc
+			argv);						// task argument pointers
 		SEM_WAIT(childALive);				// wait until child is going
 	}
 	SEM_SIGNAL(parentDead);					// parent dies
@@ -155,7 +158,7 @@ int parentTask(int argc, char* argv[])		// group 1
 int childTask(int argc, char* argv[])		// child Task
 {
 	int parent = atoi(argv[1]);
-	if ((parent<1) || (parent>NUM_PARENTS))
+	if ((parent < 1) || (parent > NUM_PARENTS))
 	{
 		printf("\n**Parent Error!  Task %d, Parent %d", curTask, parent);
 		return 0;							// die!!
@@ -165,7 +168,7 @@ int childTask(int argc, char* argv[])		// child Task
 	// count # of times scheduled
 	while (1)
 	{
-		group_count[parent-1]++;
+		group_count[parent - 1]++;
 		SWAP;
 	}
 	return 0;
@@ -187,7 +190,7 @@ int groupReportTask(int argc, char* argv[])
 	{
 		while (count-- > 0)
 		{
-		   	// update every second
+			// update every second
 			SEM_WAIT(tics1sec);
 
 		}
@@ -196,9 +199,9 @@ int groupReportTask(int argc, char* argv[])
 		for (i = 0; i < NUM_PARENTS; ++i) sum += group_count[i];
 
 		printf("\nGroups:");
-		for (i=0; i<NUM_PARENTS; i++)
+		for (i = 0; i < NUM_PARENTS; i++)
 		{
-//			printf("%10ld", group_count[i]);
+			//			printf("%10ld", group_count[i]);
 			printf("%10ld (%d%%)", group_count[i], (group_count[i] * 100) / sum);
 			group_count[i] = 0;
 		}
@@ -207,4 +210,3 @@ int groupReportTask(int argc, char* argv[])
 	}
 	return 0;
 } // end groupReportTask
-

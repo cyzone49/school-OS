@@ -92,7 +92,7 @@ typedef struct semaphore			// semaphore
 typedef struct							// task control block
 {
 	char* name;							// task name
-	int (*task)(int,char**);		// task address
+	int (*task)(int,char**);			// task address
 	int state;							// task state
 	int priority;						// task priority (project 2)
 	int argc;							// task argument count (project 1)
@@ -104,11 +104,13 @@ typedef struct							// task control block
 	void (*sigTermHandler)(void);	// task mySIGTERM handler
 	void (*sigTstpHandler)(void);	// task mySIGTSTP handler
 	Tid parent;							// task parent
-	int RPT;								// task root page table (project 5)
+	int RPT;							// task root page table (project 5)
 	int cdir;							// task directory (project 6)
 	Semaphore *event;					// blocked task semaphore
 	void* stack;						// task stack
 	jmp_buf context;					// task context pointer
+
+	int slices;							// task compute alloted time 
 } TCB;
 
 // Task specific variables
@@ -127,14 +129,19 @@ typedef struct
 // ***********************************************************************
 // system prototypes
 int createTask(char*, int (*)(int, char**), int, int, char**);
-int taskPriority(Tid tid);			// access tcb[tid].priority
+int taskPriority(Tid tid);					// access tcb[tid].priority
+Tid taskParent(Tid tid);					// access tcb[tid].parent
+char* taskName(Tid tid);					// access tcb[tid].name
 
 void setCurTask(Tid tid);
 Tid getCurTask(void);
-
 int killTask(Tid taskId);
-void powerDown(int code);
 void swapTask(void);
+void powerDown(int code);
+
+int getSlices(Tid tid);
+int dropSlice(Tid tid);
+void setSlices(Tid tid, int newSlices);
 
 int getMessage(int from, int to, Message* msg);
 int postMessage(int from, int to, char* msg);

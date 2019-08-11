@@ -105,11 +105,50 @@ int createTask(char* name,						// task name
 	return -1;
 } // end createTask
 
+
+// **********************************************************************
+// **********************************************************************
+// TASK FUNCTIONS
+
 // return task priority 
-int taskPriority(Tid tid) {
-	if (tid > -1)
-		return tcb[tid].priority;
+int taskPriority(Tid tid) 
+{
+	if (tid > -1) return tcb[tid].priority;
 	return tid;
+}
+
+// return task name
+char* taskName(Tid tid) 
+{
+	if (tid > -1) return tcb[tid].name;
+	return 0;
+}
+
+// return task parent
+Tid taskParent(Tid tid) 
+{
+	if (tid > -1) return tcb[tid].parent;
+	return tid;
+}
+
+
+// return task slices if exist
+int getSlices(Tid tid) 
+{
+	if (tid > -1) return tcb[tid].slices;
+	return tid;
+}
+
+int dropSlice(Tid tid) 
+{
+	if (tid > -1) return --tcb[tid].slices;
+	return tid;
+}
+
+void setSlices(Tid tid, int newSlices) 
+{
+	if (tid > -1) 
+		tcb[tid].slices = newSlices;
 }
 
 // **********************************************************************
@@ -174,36 +213,25 @@ int sysKillTask(int taskId)
 	// signal task terminated
 	semSignal(taskSems[taskId]);
 
-	int totalSem = 0;
-	int deletedSem = 0;
-
-	printf("\nTaskID = %i", taskId);
+	
+	
 	// look for any semaphores created by this task
 
-	sem = *semLink;
-	printf("\n\t semLink = %d\n", semLink);
+	sem = *semLink;	
 	while (sem)
-	{
-		printf("\n\t attempting to delete semaphore -> taskNum = %i \n", sem->taskNum);
+	{		
 		if (sem->taskNum == taskId)
 		{
 			// semaphore found, delete from list, release memory
-			deleteSemaphore(semLink);
-			printf("\n\t deleted \n");
-			deletedSem++;
+			deleteSemaphore(semLink);			
 		}
 		else
 		{
 			// move to next semaphore
-			semLink = (Semaphore**)&sem->semLink;
-			printf("\n\t moved to next!");
-			printf("\n\t semLink = %d\n", semLink);
+			semLink = (Semaphore**)&sem->semLink;	
 		}
-		sem = *semLink;
-		totalSem++;
+		sem = *semLink;		
 	}
-	printf("\tTotalSem = %i", totalSem);
-	printf("\nTotalDeletedSem = %i", deletedSem);
 
 	// ?? delete task from system queues
 	for (int i = 0; i < tcb[taskId].argc; i++) 
@@ -211,6 +239,23 @@ int sysKillTask(int taskId)
 		free((tcb[taskId].argv)[i]);
 	}		
 	free(tcb[taskId].argv);
+
+	Tid cid = -1;
+	for (Tid id = 0; id < MAX_TASKS; id++) 
+	{
+		if (taskName(id) != 0 && taskParent(id) == taskId) 
+		{
+			if (cid == -1) 
+			{
+				cid = id;
+				tcb[cid].parent = tcb[taskId].parent;
+			}
+			else 
+			{
+				tcb[id].parent = cid;
+			}
+		}
+	}
 	
 	pull(rQueue, taskId); 
 	setCurTask(0);					// curTask is now Shell

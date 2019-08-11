@@ -39,6 +39,11 @@ void pollInterrupts(void);
 static int scheduler(void);
 static int dispatcher(void);
 
+// p5
+static int scheduler_Slices(void);
+static int scheduler_Priority(void);
+static void spreadSlices(Tid parent, int slices);
+
 //static void keyboard_isr(void);
 //static void timer_isr(void);
 
@@ -89,13 +94,16 @@ time_t oldTime10;
 time_t oldTime1;					// old 1sec time
 clock_t myClkTime;
 clock_t myOldClkTime;
-int* rq;							// ready priority queue
 
-void setCurTask(Tid tid) {
+//int* rq;							// ready priority queue
+
+void setCurTask(Tid tid) 
+{
 	curTask = tid;
 }
 
-Tid getCurTask(void) {	
+Tid getCurTask(void) 
+{	
 	return curTask;
 }
 
@@ -176,7 +184,13 @@ int main(int argc, char* argv[])
 		pollInterrupts();
 
 		// schedule highest priority ready task		
-		if (scheduler() < 0) continue;
+//		if (scheduler() < 0) continue;
+		if (scheduler_mode) {
+			if (scheduler_Slices() < 0) continue;
+		}
+		else {
+			if (scheduler_Priority() < 0) continue;
+		}
 
 		// dispatch curTask, quit OS if negative return
 		if (dispatcher() < 0) break;
@@ -213,6 +227,65 @@ static int scheduler()
 
 } // end scheduler
 
+// **********************************************************************
+// **********************************************************************
+// scheduler Priority
+//
+static int scheduler_Priority()
+{
+	Tid tid = next(rQueue);				// grab tid of next highest priority ready task
+	if (tid == -1)
+		return -1;
+
+	setCurTask(tid);					// if returned, task is now curTask
+
+	if (tcb[getCurTask()].signal & mySIGSTOP)
+		return -1;
+
+	return curTask;
+} // end scheduler Priority - RR
+
+// **********************************************************************
+// **********************************************************************
+// scheduler Slices
+//
+static int scheduler_Slices()
+{
+	Tid tid = nextSlices(rQueue);
+	if (tid == -1) 
+	{
+		if (rQueue->size > 0)
+			spreadSlices(0, rQueue->size * 50);
+		return -1;
+	}
+
+	setCurTask(tid);
+
+	if (tcb[getCurTask()].signal & mySIGSTOP)
+		return -1;
+
+	return curTask;
+} // end Slices scheduler - FSS
+
+
+static void spreadSlices(Tid parent, int slices) 
+{
+	Tid children[MAX_TASKS];
+	int count = 0;
+
+	for (Tid tid = 0; tid < MAX_TASKS; tid++) 
+	{
+		if (taskName(tid) != 0 && taskParent(tid) == parent && tid != parent)
+		{
+			children[count++] = tid;
+		}
+	}
+	setSlices(parent, slices / (count + 1));
+	for (int i = 0; i < count; i++)
+	{
+		spreadSlices(children[i], slices / (count + 1));
+	}
+}
 
 // **********************************************************************
 // **********************************************************************
@@ -354,8 +427,8 @@ static int initOS()
 	diskMounted = 0;					// disk has been mounted
 
 	// malloc ready queue
-	rq = (int*)malloc(MAX_TASKS * sizeof(int));
-	if (rq == NULL) return 99;
+	/*rq = (int*)malloc(MAX_TASKS * sizeof(int));
+	if (rq == NULL) return 99;*/
 
 	// capture current time
 	lastPollClock = clock();			// last pollClock
@@ -406,7 +479,7 @@ void powerDown(int code)
 		deleteSemaphore(&semaphoreList);
 
 	// free ready queue
-	free(rq);
+	//free(rq);
 	free(rQueue);
 
 	// ?? release any other system resources

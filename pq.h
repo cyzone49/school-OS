@@ -19,12 +19,14 @@ typedef struct priorityQueue {
 PQ* newPqueue(int cap, char* name);
 
 // main functions
-Tid next(PQ* q);
 Tid pull(PQ* q, int tid);
-void put(PQ* q, Tid tid);
+Tid next(PQ* q);
+Tid pop(PQ* q);
 Tid pop(PQ* q);
 Tid ready(PQ* src, PQ* dst);
 Tid block(PQ* src, PQ* dst, Tid tid);
+
+Tid nextSlices(PQ* q);
 
 // peripherals
 void printPqueue(PQ* q);
