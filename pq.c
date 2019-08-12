@@ -19,8 +19,7 @@ PQ* newPqueue(int cap, char* name)
 	}
 	else 
 	{
-		newQueue->cap = cap;
-		//newQueue->content = malloc(sizeof(PQ) * (cap));
+		newQueue->cap = cap;		
 		newQueue->content = malloc(sizeof(Tid) * (cap));
 	}
 	return newQueue;
@@ -200,24 +199,5 @@ Tid block(PQ* src, PQ* dst, Tid tid)
 {	
 	Tid rtid = pull(src, tid);
 	if (rtid > -1) put(dst, rtid);
-	return rtid;
-}
-
-void pqprintf(char* fmt, ...) {
-	va_list args;
-	va_start(args, fmt);
-	vprintf(fmt, args);
-	fflush(stdout);
-	va_end(args);
-}
-
-void printPqueue(PQ* q) {
-	pqprintf("********* Priority Queue - %s *********\n", q->name);
-	pqprintf("/tcap:  %i\n", q->cap);
-	pqprintf("/tsize: %i\n", q->size);
-	for (int i = q->size - 1; i > -1; i--) {
-		Tid tid = q->content[i];
-		pqprintf("PQ[%i]: t: %i  p: %i\n", q->size - i - 1, tid, taskPriority(tid));
-	}
-	pqprintf("****************************************\n");
+	//return rtid;
 }

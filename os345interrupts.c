@@ -39,7 +39,7 @@ static void timer_isr(void);
 // **********************************************************************
 // global semaphores
 
-extern Semaphore* keyboard;				// keyboard semaphore
+// extern Semaphore* keyboard;				// keyboard semaphore
 extern Semaphore* charReady;			// character has been entered
 extern Semaphore* inBufferReady;		// input buffer ready semaphore
 
@@ -105,7 +105,7 @@ static void keyboard_isr()
 			{				
 				printf("%c", inChar);
 				inBufIndx = 0;				// EOL, signal line ready
-				semSignal(inBufferReady);	// SIGNAL(inBufferReady)
+				semSignal(inBufferReady);	
 				break;
 			}
 			case 0x12:						// ^r
@@ -125,7 +125,7 @@ static void keyboard_isr()
 				inBufIndx = 0;
 				inBuffer[0] = 0;
 				sigSignal(0, mySIGINT);		// halt all tasks
-				semSignal(inBufferReady);	// SEM_SIGNAL(inBufferReady)
+				semSignal(inBufferReady);	
 				break;
 			}
 			case 0x7f:						

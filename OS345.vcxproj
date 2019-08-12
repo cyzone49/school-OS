@@ -151,6 +151,7 @@
     <ClInclude Include="os345park.h" />
     <ClInclude Include="os345signals.h" />
     <ClInclude Include="pq.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -113,7 +113,7 @@ int jurassicTask(int argc, char* argv[])
 	do
 	{
    	// wait for signal to move cars
-		ParkDebug("SEM_WAIT(moveCars)");
+		//ParkDebug("SEM_WAIT(moveCars)");
 		SEM_WAIT(moveCars);									SWAP;
 
 		// order car locations
@@ -149,11 +149,11 @@ int jurassicTask(int argc, char* argv[])
 				{
 					// need a passenger
 					sprintf(buf, "SEM_SIGNAL(fillSeat[%d])", c[i]);
-					ParkDebug(buf);
+					//ParkDebug(buf);
 					SEM_SIGNAL(fillSeat[c[i]]);					SWAP;	// seat open
 
 					sprintf(buf, "SEM_WAIT(seatFilled[%d])", c[i]);
-					ParkDebug(buf);
+					//ParkDebug(buf);
 					SEM_WAIT(seatFilled[c[i]]);					SWAP;	// passenger in seat
 					myPark.cars[c[i]].passengers++;				SWAP;
 				}
@@ -169,7 +169,7 @@ int jurassicTask(int argc, char* argv[])
 					if (--myPark.cars[c[i]].passengers == 0)
 					{
 						sprintf(buf, "SEM_SIGNAL(rideOver[%d])", c[i]);
-						ParkDebug(buf);
+						//ParkDebug(buf);
 						SEM_SIGNAL(rideOver[c[i]]);				SWAP;
 					}
 				}

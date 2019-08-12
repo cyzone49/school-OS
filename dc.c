@@ -10,31 +10,8 @@ Memo* newMemo(int cost, Semaphore* task)
 	retMemo->cost = cost;
 	retMemo->event = task;
 	retMemo->next = 0;
-	return retMemo;
-}
+	return retMemo;}
 
-
-void tick(Memo** dclock) {
-
-	if (*dclock == 0) 
-	{
-		return;
-	}
-
-	Memo* memo = *dclock;
-	if (memo)
-		memo->cost--;
-
-	while (memo && memo->cost < 1) 
-	{
-		semSignal(memo->event);
-		Memo* deleteMe = memo;
-		memo = memo->next;
-		free(deleteMe);
-	}
-
-	(*dclock) = memo;
-}
 
 void insert(Memo** dclock, Memo* new)
 {
@@ -53,4 +30,28 @@ void insert(Memo** dclock, Memo* new)
 	}
 
 	*next = new;
+}
+
+
+void tick(Memo** dclock)
+{
+
+	if (*dclock == 0)
+	{
+		return;
+	}
+
+	Memo* memo = *dclock;
+	if (memo)
+		memo->cost--;
+
+	while (memo && memo->cost < 1)
+	{
+		semSignal(memo->event);
+		Memo* deleteMe = memo;
+		memo = memo->next;
+		free(deleteMe);
+	}
+
+	(*dclock) = memo;
 }
