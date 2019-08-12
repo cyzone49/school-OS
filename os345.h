@@ -256,15 +256,4 @@ void initLC3Memory(int startFrame, int endFrame);
 int lc3Task(int, char**);
 
 void debugPrint(char category, char type, char* fmt, ...);
-
-extern bool printParser;
-extern bool printParserReads;
-extern bool printInterrupts;
-extern bool printInterruptKeystrokes;
-extern bool printSignals;
-
-extern bool printfnNames;
-extern bool printMallocs;
-extern bool printErrors;
-
 #endif // __os345_h__

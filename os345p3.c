@@ -41,6 +41,32 @@ extern Semaphore* rideOver[NUM_CARS];			// (signal) ride over
 void CL3_project3(int, char**);
 void CL3_dc(int, char**);
 
+void sendLock(Semaphore* lock, Semaphore* sem);
+Semaphore* getLock(Semaphore* lock);
+
+void visWaitPark();
+void visEnterPark();
+void visWaitMuseum();
+void visEnterMuseum();
+void visWaitRide();
+void visEnterRide();
+void visWaitGiftShop();
+void visEnterGiftShop();
+void visLeavePark();
+
+void driSellTicket(int id);
+void driSleep(int id);
+void driDrive(int id, int carId);
+
+int driver(int argc, char* argv[]);
+int visitor(int argc, char* argv[]);
+int car(int argc, char* argv[]);
+void waitRandom(int max, Semaphore* lock);
+
+int printPark(int argc, char* argv[]);
+
+void pnprintf(const char* fmt, ...);
+void ptprintf(const char* fmt, ...);
 
 // ***********************************************************************
 // ***********************************************************************

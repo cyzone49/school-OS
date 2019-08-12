@@ -23,9 +23,6 @@
 #include <assert.h>
 #include "os345.h"
 
-#include "pq.h"
-
-
 #define NUM_PARENTS			5
 #define NUM_REPORT_SECONDS	5
 

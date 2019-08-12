@@ -84,7 +84,7 @@ int P1_shellTask(int argc, char* argv[])
 		if (diskMounted) printf("\n%s>>", dirPath);
 		else printf("\n%ld>>", swapCount);
 
-		SEM_WAIT(inBufferReady);			// wait for input buffer semaphore
+		semWait(inBufferReady);			// wait for input buffer semaphore
 		if (!inBuffer[0]) continue;		// ignore blank lines
 		// printf("%s", inBuffer);
 
@@ -276,8 +276,7 @@ int P1_add(int argc, char* argv[])
 	{
 		printf("\noperand: %d", parseNum(argv[i]));
 		total += parseNum(argv[i]);
-	}
-		
+	}		
 	
 	printf("\n=> SUM = %d\n", total);
 	return 0;

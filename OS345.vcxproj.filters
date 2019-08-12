@@ -60,10 +60,13 @@
     <ClCompile Include="os345tasks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="debugPrint.c">
+    <ClCompile Include="pq.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pq.c">
+    <ClCompile Include="dc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debugPrint.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,10 +89,10 @@
     <ClInclude Include="os345signals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="os345argparse.h">
+    <ClInclude Include="pq.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pq.h">
+    <ClInclude Include="dc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

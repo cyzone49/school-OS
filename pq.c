@@ -8,8 +8,7 @@ extern PQ* rQueue;						// task ready queue
 
 // create new Priority Queue
 PQ* newPqueue(int cap, char* name) 
-{
-	pqprintf("newPqueue(%i, %s)\n", cap, name);
+{	
 	PQ* newQueue = malloc(sizeof(PQ));
 	newQueue->size = 0;
 	newQueue->name = name;
@@ -51,7 +50,7 @@ Tid next(PQ* q)
 
 Tid nextSlices(PQ* q) {	
 
-	printPqueue(q);
+	//printPqueue(q);
 
 	if (q->size < 1) return -1;
 
@@ -207,7 +206,7 @@ Tid block(PQ* src, PQ* dst, Tid tid)
 void pqprintf(char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
-//	vprintf(fmt, args);
+	vprintf(fmt, args);
 	fflush(stdout);
 	va_end(args);
 }
@@ -218,7 +217,7 @@ void printPqueue(PQ* q) {
 	pqprintf("/tsize: %i\n", q->size);
 	for (int i = q->size - 1; i > -1; i--) {
 		Tid tid = q->content[i];
-		//pqprintf("PQ[%i]: t: %i  p: %i\n", q->size - i - 1, tid, taskPriority(tid));
+		pqprintf("PQ[%i]: t: %i  p: %i\n", q->size - i - 1, tid, taskPriority(tid));
 	}
 	pqprintf("****************************************\n");
 }

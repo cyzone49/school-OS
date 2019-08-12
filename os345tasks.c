@@ -52,7 +52,8 @@ int createTask(char* name,						// task name
 
 	// malloc new argv
 	char** newArgv = malloc(sizeof(char*) * argc);
-	for (int i = 0; i < argc; i++) {
+	for (int i = 0; i < argc; i++) 
+	{
 		newArgv[i] = malloc(sizeof(char) * (strlen(argv[i]) + 1));
 		strcpy(newArgv[i], argv[i]);
 	}
@@ -68,7 +69,8 @@ int createTask(char* name,						// task name
 			if (taskSems[tid]) deleteSemaphore(&taskSems[tid]);
 			sprintf(buf, "task %d", tid);
 			taskSems[tid] = createSemaphore(buf, 0, 0);
-			taskSems[tid]->taskNum = tid;	// assign to shell
+			taskSems[tid]->taskNum = 0;	// assign to shell
+			//taskSems[tid]->taskNum = tid;	// assign to shell
 
 			// copy task name
 			tcb[tid].name = (char*)malloc(strlen(name) + 1);
@@ -186,7 +188,8 @@ static void exitTask(Tid tid)
 	assert("exitTaskError" && tcb[tid].name);
 
 	Semaphore* sem = semaphoreList;
-	while (sem) {
+	while (sem) 
+	{
 		if (pull(sem->pq, tid) != -1)
 			put(rQueue, tid);
 		sem = (Semaphore*)sem->semLink;

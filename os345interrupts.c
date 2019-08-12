@@ -130,17 +130,15 @@ static void keyboard_isr()
 			}
 			case 0x7f:						
 			{				
-				if (inBufIndx > 0) {
+				if (inBufIndx > 0) 
+				{
 					printf("\b \b");
 					inBuffer[inBufIndx--] = '\0';
 				}
 				break;
 			}
 			default:
-			{
-				/*debugPrint('i', 'r', "respond - default\n");
-				inBuffer[inBufIndx++] = inChar;
-				inBuffer[inBufIndx] = 0;*/
+			{	
 				if (inBufIndx < INBUF_SIZE - 1) 
 				{
 					printf("%c", inChar);
@@ -176,27 +174,28 @@ static void timer_isr()
 
 	// capture current time
   	time(&currentTime);
-
-  	// one second timer
-  	if ((currentTime - oldTime1) >= 1)
-  	{
-		// signal 1 second
-  	   semSignal(tics1sec);
-		oldTime1 += 1;
-  	}
-
-	// ?? add other timer sampling/signaling code here for project 2
+	
 	// ten second timer
-	if ((currentTime - oldTime10) >= 10) {
+	if ((currentTime - oldTime10) >= 10)
+	{
 		// signal 10 second
 		semSignal(tics10sec);
 		oldTime10 += 10;
 	}
 
+	// one second timer
+	if ((currentTime - oldTime1) >= 1) 
+	{
+		// signal 1 second
+		semSignal(tics1sec);
+		oldTime1 += 1;
+	}
+
 	// sample fine clock
 	myClkTime = clock();
-	if ((myClkTime - myOldClkTime) >= ONE_TENTH_SEC) {
-		myOldClkTime = myOldClkTime + ONE_TENTH_SEC;   
+	if ((myClkTime - myOldClkTime) >= ONE_TENTH_SEC) 
+	{
+		myOldClkTime = myOldClkTime + ONE_TENTH_SEC;   // update old
 		semSignal(tics10thsec);
 	}
 

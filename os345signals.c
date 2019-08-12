@@ -35,55 +35,42 @@ extern int curTask;							// current task #
 //
 //	return 1 if task is NOT to be scheduled.
 //
-int signals(void)
-{	
-	int resultVal = 0;
-
-	if (tcb[curTask].signal)
-	{		
-		if (tcb[curTask].signal & mySIGCONT)
+int signals(void) {
+	
+	int retVal = 0;
+	if (tcb[getCurTask()].signal) 
+	{
+		if (tcb[getCurTask()].signal & mySIGCONT) 
 		{
-			tcb[curTask].signal &= ~mySIGCONT;
-			(*tcb[curTask].sigContHandler)();
+			tcb[getCurTask()].signal &= ~mySIGCONT;
+			(*tcb[getCurTask()].sigContHandler)();
 		}
-		if (tcb[curTask].signal & mySIGINT)
+		if (tcb[getCurTask()].signal & mySIGINT) 
 		{
-			tcb[curTask].signal &= ~mySIGINT;
-			(*tcb[curTask].sigIntHandler)();
+			tcb[getCurTask()].signal &= ~mySIGINT;
+			(*tcb[getCurTask()].sigIntHandler)();
 		}
-		if (tcb[curTask].signal & mySIGKILL)
+		if (tcb[getCurTask()].signal & mySIGKILL) 
 		{
-			tcb[curTask].signal &= ~mySIGKILL;
-			(*tcb[curTask].sigKillHandler)();
+			tcb[getCurTask()].signal &= ~mySIGKILL;
+			(*tcb[getCurTask()].sigKillHandler)();
 		}
-		if (tcb[curTask].signal & mySIGTERM)
+		if (tcb[getCurTask()].signal & mySIGTERM) 
 		{
-			tcb[curTask].signal &= ~mySIGTERM;
-			(*tcb[curTask].sigTermHandler)();
-			resultVal = 1;
+			tcb[getCurTask()].signal &= ~mySIGTERM;
+			(*tcb[getCurTask()].sigTermHandler)();
+			retVal = 1;
 		}
-		if (tcb[curTask].signal & mySIGTSTP)
+		if (tcb[getCurTask()].signal & mySIGTSTP) 
 		{
-			tcb[curTask].signal &= ~mySIGTSTP;
-			(*tcb[curTask].sigTstpHandler)();
-			resultVal = 1;
+			tcb[getCurTask()].signal &= ~mySIGTSTP;
+			(*tcb[getCurTask()].sigTstpHandler)();
+			retVal = 1;
 		}
 	}
-	return resultVal;
-}
-//int signals(void)
-//{
-//	if (tcb[curTask].signal)
-//	{
-//		if (tcb[curTask].signal & mySIGINT)
-//		{
-//			tcb[curTask].signal &= ~mySIGINT;
-//			(*tcb[curTask].sigIntHandler)();
-//		}
-//	}
-//	return 0;
-//}
 
+	return retVal;
+}
 
 // **********************************************************************
 // **********************************************************************
@@ -146,8 +133,8 @@ int sigSignal(int taskId, int sig)
 		}
 		return 0;
 	}
-	// error
-	return 1;
+	
+	return 1;								// error
 }
 
 //	clearSignal - clear signal for task(s)
@@ -158,8 +145,10 @@ int clearSignal(int taskId, int sig) {
 		tcb[taskId].signal &= ~sig;
 		return 0;
 	}
-	else if (taskId == -1) {		
-		for (taskId = 0; taskId < MAX_TASKS; taskId++) {
+	else if (taskId == -1)
+	{
+		for (taskId = 0; taskId < MAX_TASKS; taskId++) 
+		{
 			clearSignal(taskId, sig);
 		}
 		return 0;
@@ -198,7 +187,6 @@ void defaultSigTermHandler(void)			// task mySIGTERM handler
 
 void defaultSigTstpHandler(void)			// task mySIGTSTP handler
 {
-
 	sigSignal(-1, mySIGSTOP);
 	return;
 }
@@ -206,7 +194,8 @@ void defaultSigTstpHandler(void)			// task mySIGTSTP handler
 void createTaskSigHandlers(int tid) {
 
 	tcb[tid].signal = 0;
-	if (tid) {
+	if (tid) 
+	{
 		// inherit parent signal handlers
 		tcb[tid].sigContHandler = tcb[getCurTask()].sigContHandler;// mySIGCONT handler
 		tcb[tid].sigIntHandler = tcb[getCurTask()].sigIntHandler;// mySIGINT handler
@@ -215,7 +204,8 @@ void createTaskSigHandlers(int tid) {
 		tcb[tid].sigTstpHandler = tcb[getCurTask()].sigTstpHandler;// mySIGTSTP handler
 
 	}
-	else {
+	else 
+	{
 		// otherwise use defaults
 		tcb[tid].sigContHandler = defaultSigContHandler;// task mySIGCONT handler
 		tcb[tid].sigIntHandler = defaultSigIntHandler;	// task mySIGINT handler

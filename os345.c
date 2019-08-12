@@ -250,7 +250,7 @@ static int scheduler_Priority()
 // scheduler Slices
 //
 static int scheduler_Slices()
-{
+{	
 	Tid tid = nextSlices(rQueue);
 	if (tid == -1) 
 	{
@@ -384,6 +384,7 @@ void swapTask()
 
 	// increment swap cycle counter
 	swapCount++;
+	dropSlice(getCurTask());
 
 	// either save current task context or schedule task (return)
 	if (setjmp(tcb[curTask].context))

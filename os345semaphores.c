@@ -75,8 +75,8 @@ void semSignal(Semaphore* s)
 		else 
 		{
 			// nothing waiting, signal
-		}
-		s->state++;						// increment counting semaphore
+			s->state++;					// increment counting semaphore
+		}		
 		if (!superMode) swapTask();
 		return;
 	}
@@ -125,7 +125,7 @@ int semWait(Semaphore* s)
 
 			block(rQueue, s->pq, getCurTask()); // move from rQueue to s->pq
 
-			s->state = 0;						// reset state
+			//s->state = 0;						// reset state
 			swapTask();							// reschedule the tasks
 			return 1;
 		}
@@ -148,25 +148,41 @@ int semWait(Semaphore* s)
 //
 int semTryLock(Semaphore* s)
 {
-	assert("semTryLock Error" && s);												// assert semaphore
+	assert("semTryLock Error" && s);									// assert semaphore
 	assert("semTryLock Error" && ((s->type == 0) || (s->type == 1)));	// assert legal type
-	assert("semTryLock Error" && !superMode);									// assert user mode
+	assert("semTryLock Error" && !superMode);							// assert user mode
 
 	// check semaphore type
-	if (s->type == 0)
+	if (s->type == 0)											// binary semaphore
 	{
-		// binary semaphore
-		// if state is zero, then block task
-		if (s->state == 0) return 0;
+		if (s->state == 0 || s->pq->size > 0)					// state is 0 or more in queue -> block task
+		{
+			return 0;
+		}
+		else													// state is non-zero (semaphore already signaled)
+		{
+			s->state = 0;										// reset state, 
+			return 1;											// and don't block
+		}
 		
-		// state is non-zero (semaphore already signaled)
-		s->state = 0;						// reset state, and don't block
-		return 1;
+		//// if state is zero, then block task
+		//if (s->state == 0) return 0;
+		//
+		//// state is non-zero (semaphore already signaled)
+		//s->state = 0;						// reset state, and don't block
+		//return 1;
 	}
-	else 
-	{
-		// counting semaphore
-		return 1;								
+	else														// counting semaphore
+	{		
+		if (s->state < 1 || s->pq->size > 0) 
+		{
+			return 0;
+		}
+		else 
+		{
+			s->state--;
+			return 1;
+		}
 	}
 } // end semTryLock
 
@@ -211,15 +227,15 @@ Semaphore* createSemaphore(char* name, int type, int state)
 
 	// set semaphore values
 	sem->name = (char*)malloc(strlen(name) + 1);
-	strcpy(sem->name, name);				// semaphore name
-	sem->type = type;							// 0=binary, 1=counting
-	sem->state = state;						// initial semaphore state
+	strcpy(sem->name, name);						// semaphore name
+	sem->type = type;								// 0=binary, 1=counting
+	sem->state = state;								// initial semaphore state
 	sem->taskNum = getCurTask();					// set parent task #
-	sem->pq = newPqueue(CAP_INCREASE, sem->name);		// init task queue
+	sem->pq = newPqueue(CAP_INCREASE, sem->name);	// init task queue
 
 	// prepend to semaphore list
 	sem->semLink = (struct semaphore*) semaphoreList;
-	semaphoreList = sem;						// link into semaphore list
+	semaphoreList = sem;							// link into semaphore list
 	return sem;										// return semaphore pointer
 } // end createSemaphore
 

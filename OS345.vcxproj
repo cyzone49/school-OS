@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="dc.c" />
     <ClCompile Include="debugPrint.c" />
     <ClCompile Include="os345.c" />
     <ClCompile Include="os345fat.c" />
@@ -142,8 +143,8 @@
     <ClCompile Include="pq.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dc.h" />
     <ClInclude Include="os345.h" />
-    <ClInclude Include="os345argparse.h" />
     <ClInclude Include="os345config.h" />
     <ClInclude Include="os345fat.h" />
     <ClInclude Include="os345lc3.h" />
