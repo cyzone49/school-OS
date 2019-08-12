@@ -29,6 +29,8 @@
 //#include "os345config.h"
 #include "pq.h"
 
+#include "os345lc3.h"
+
 
 extern TCB tcb[];							// task control block
 extern int curTask;							// current task #
@@ -88,7 +90,9 @@ int createTask(char* name,						// task name
 			tcb[tid].argv = newArgv;			// malloc memory for new task stack (from newArgv)
 
 			tcb[tid].event = 0;					// suspend semaphore
-			tcb[tid].RPT = 0;					// root page table (project 5)
+			//tcb[tid].RPT = 0;					// root page table (project 5)
+			tcb[tid].RPT = LC3_RPT + ((tid) ? ((tid - 1) << 6) : 0);
+			
 			tcb[tid].cdir = CDIR;				// inherit parent cDir (project 6)
 
 			// define task signals

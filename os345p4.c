@@ -36,11 +36,13 @@ extern int curTask;						// current task #
 extern int memAccess;
 extern int memHits;
 extern int memPageFaults;
-//extern int nextPage;
+extern int nextPage;
 extern int pageReads;
 extern int pageWrites;
 extern int clockRPT;					// RPT clock
 extern int clockUPT;					// UPT clock
+extern int cBigHand;
+extern int cLittleHand;
 
 extern unsigned short int memory[];
 extern int getMemoryData(int);

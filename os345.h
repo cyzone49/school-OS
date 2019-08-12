@@ -72,6 +72,11 @@
 enum {PAGE_INIT, PAGE_READ, PAGE_OLD_WRITE, PAGE_NEW_WRITE,
 	  PAGE_GET_SIZE, PAGE_GET_READS, PAGE_GET_WRITES, PAGE_GET_ADR, PAGE_FREE};
 
+#define DEBUG_STATEMENT(b,s,...)     if(b){printf(s,##__VA_ARGS__);}
+#define DEBUG_MMU   		FALSE || DEBUG_OVERRIDE
+#define DEBUG_OVERRIDE		FALSE
+#define DEBUG_SIGNALS		FALSE || DEBUG_OVERRIDE
+
 // ***********************************************************************
 // system structs
 typedef int bool;						// boolean value
@@ -219,6 +224,10 @@ int P4_vmaccess(int, char**);
 int P4_virtualMemStats(int, char**);
 int P4_crawler(int, char**);
 int P4_memtest(int, char**);
+
+void outPTE(char* s, int pte);
+void displayTableHierarchy();
+void displayFrame(int f);
 
 int P5_project5(int, char**);
 int P5_stress1(int, char**);
