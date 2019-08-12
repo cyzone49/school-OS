@@ -19,9 +19,8 @@ C:\Users\Dat Vu\source\repos\os345\OS345\os345mmu.c(82,6): warning C4101:  'rpta
   os345p3.c
 C:\Users\Dat Vu\source\repos\os345\OS345\os345p2.c(114,6): warning C4101:  'i': unreferenced local variable
 C:\Users\Dat Vu\source\repos\os345\OS345\os345park.h(21,1): warning C4005:  'ParkDebug': macro redefinition
-C:\Users\Dat Vu\source\repos\os345\OS345\os345park.h(20): message :  see previous definition of 'ParkDebug'
   os345p4.c
-C:\Users\Dat Vu\source\repos\os345\OS345\os345p3.c(326,10): warning C4013:  'insertDC' undefined; assuming extern returning int
+C:\Users\Dat Vu\source\repos\os345\OS345\os345park.h(20): message :  see previous definition of 'ParkDebug'
 C:\Users\Dat Vu\source\repos\os345\OS345\os345p4.c(321,41): warning C4101:  'upte2': unreferenced local variable
   os345p5.c
   os345p6.c
@@ -40,6 +39,4 @@ C:\Users\Dat Vu\source\repos\os345\OS345\os345semaphores.c(45,6): warning C4101:
   Generating Code...
 C:\Users\Dat Vu\source\repos\os345\OS345\os345tasks.c(100,7): warning C4013:  'put' undefined; assuming extern returning int
 C:\Users\Dat Vu\source\repos\os345\OS345\os345tasks.c(100,7): warning C4013: C:\Users\Dat Vu\source\repos\os345\OS345\pq.c(203) : warning C4716: 'block': must return a value
-os345p3.obj : error LNK2019: unresolved external symbol _insertDC referenced in function _P3_visitor
-os345p3.obj : error LNK2001: unresolved external symbol _dcFront
-C:\Users\Dat Vu\source\repos\os345\Debug\OS345.exe : fatal error LNK1120: 2 unresolved externals
+  OS345.vcxproj -> C:\Users\Dat Vu\source\repos\os345\Debug\OS345.exe
