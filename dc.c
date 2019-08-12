@@ -6,20 +6,24 @@
 
 Memo* newMemo(int cost, Semaphore* task) 
 {
-	Memo* newMemo = malloc(sizeof(Memo));
-	newMemo->cost = cost;
-	newMemo->event = task;
-	newMemo->next = 0;
-	return newMemo;
+	Memo* retMemo = malloc(sizeof(Memo));
+	retMemo->cost = cost;
+	retMemo->event = task;
+	retMemo->next = 0;
+	return retMemo;
 }
 
-void tick(Memo** clock) 
-{
-	if (*clock == 0) return;
 
-	Memo* memo = *clock;
+void tick(Memo** dclock) {
 
-	if (memo) memo->cost--;
+	if (*dclock == 0) 
+	{
+		return;
+	}
+
+	Memo* memo = *dclock;
+	if (memo)
+		memo->cost--;
 
 	while (memo && memo->cost < 1) 
 	{
@@ -29,12 +33,12 @@ void tick(Memo** clock)
 		free(deleteMe);
 	}
 
-	(*clock) = memo;
+	(*dclock) = memo;
 }
 
-void insert(Memo** clock, Memo* new) 
+void insert(Memo** dclock, Memo* new)
 {
-	Memo** next = clock;
+	Memo** next = dclock;
 
 	while ((*next) && (*next)->cost <= new->cost) 
 	{
