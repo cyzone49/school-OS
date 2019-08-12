@@ -16,65 +16,57 @@
 // **   DISCLAMER ** DISCLAMER ** DISCLAMER ** DISCLAMER ** DISCLAMER   **
 // ***********************************************************************
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include <time.h>
 #include <assert.h>
-#include <stdarg.h>
 
-
+#include "dc.h"
 #include "os345.h"
 #include "os345park.h"
-#include "dc.h"
 
 // ***********************************************************************
 // project 3 variables
 
 // Jurassic Park
 extern JPARK myPark;
-extern Semaphore* parkMutex;						// protect park access
-extern Semaphore* fillSeat[NUM_CARS];			// (signal) seat ready to fill
+extern Semaphore* parkMutex;				// protect park access
+extern Semaphore* fillSeat[NUM_CARS];		// (signal) seat ready to fill
 extern Semaphore* seatFilled[NUM_CARS];		// (wait) passenger seated
-extern Semaphore* rideOver[NUM_CARS];			// (signal) ride over
+extern Semaphore* rideOver[NUM_CARS];		// (signal) ride over
 
+void visWaitPark();
+void visEnterPark();
+void visWaitMuseum();
+void visEnterMuseum();
+void visWaitRide();
+void visEnterRide();
+void visWaitGiftShop();
+void visEnterGiftShop();
+void visLeavePark();
 
-// ***********************************************************************
-// project 3 functions and tasks
-void CL3_project3(int, char**);
-void CL3_dc(int, char**);
+void driSellTicket(int id);
+void driSleep(int id);
+void driDrive(int id, int carId);
 
 void sendLock(Semaphore* lock, Semaphore* sem);
 Semaphore* getLock(Semaphore* lock);
 
-void vWaitPark();
-void vEnterPark();
-void vWaitMuseum();
-void vEnterMuseum();
-void vWaitRide();
-void vEnterRide();
-void vWaitGiftShop();
-void vEnterGiftShop();
-void vLeavePark();
-
-void driverSellTicket(int id);
-void driverSleep(int id);
-void driverDrive(int id, int carId);
-
 int driver(int argc, char* argv[]);
 int visitor(int argc, char* argv[]);
 int car(int argc, char* argv[]);
-
-int printPark(int argc, char* argv[]);
-//void pnprintf(const char* fmt, ...);
-//void ptprintf(const char* fmt, ...);
-
 void waitRandom(int max, Semaphore* lock);
 
-// ***********************************************************************
-// ***********************************************************************
-// project3 semaphores
+int printPark(int argc, char* argv[]);
+
+void pnprintf(const char* fmt, ...);
+void ptprintf(const char* fmt, ...);
+
+Semaphore* randSem;					// Extra random semaphore
+
 Semaphore* mailMutex;				// mailbox protection
 Semaphore* mailSent;				// mailbox sent flag
 Semaphore* mailAcquired;			// mailbox received flag
@@ -85,526 +77,400 @@ Semaphore* museumOccupancy;			// museum occupancy resource
 Semaphore* rideTicket;				// ride ticket resource
 Semaphore* giftShopOccupancy;		// gift shop occupancy resource
 
-Semaphore* rideTicketBoothMutex;	// mutex - ticket booth 
-Semaphore* workerNeeded;			// flag - worker needed
-Semaphore* rideTicketSellerNeeded;	// flag - ticket seller needed
-Semaphore* rideTicketSold;			// flag - ticket sold
-Semaphore* rideTicketBought;		// flag - ticket bought
-Semaphore* rideDriverNeeded;		// flag - driver needed
-Semaphore* rideSeatTaken;			// flag - ride seat taken 
-Semaphore* rideSeatOpen;			// flag - ride seat open 
-Semaphore* rideDriverSeatTaken;		// flag - driver seat taken 
+Semaphore* workerNeeded;			// worker needed flag
+Semaphore* rideTicketBoothMutex;	// ticket booth mutex
+Semaphore* rideTicketSellerNeeded;	// ticket seller needed flag
+Semaphore* rideTicketSold;			// ticket sold flag
+Semaphore* rideTicketBought;		// ticket bought flag
+Semaphore* rideDriverNeeded;		// driver needed flag
+Semaphore* rideSeatTaken;			// ride seat taken flag
+Semaphore* rideSeatOpen;			// ride seat open flag
+Semaphore* rideDriverSeatTaken;		// driver seat taken flag
 
 Semaphore* departingCar;			// lock for mailbox
 Semaphore* departingCarDriver;		// lock for mailbox
-
-Semaphore* randSem;					// Extra random semaphore
 
 extern Semaphore* tics10thsec;
 
 Memo* Dclock;
 
-
-
 // ***********************************************************************
 // ***********************************************************************
 // project3 command
-int P3_project3(int argc, char* argv[])
-{
-	char buf[32];													SWAP;
-	char buf2[32];													SWAP;
-	char* newArgv[2];												SWAP;
+int P3_project3(int argc, char* argv[]) {
+	char buf[32]; SWAP;
+	char buf2[32]; SWAP;
+	char* newArgv[2]; SWAP;
 
 	// start park
-	sprintf(buf, "jurassicPark");									SWAP;
-	newArgv[0] = buf;												SWAP;
-	createTask(buf,														// task name
-		jurassicTask,													// task
-		MED_PRIORITY,													// task priority
-		1,																// task count
-		newArgv);													SWAP;	// task argument				
+	sprintf(buf, "jurassicPark"); SWAP;
+	newArgv[0] = buf; SWAP;
+	createTask(buf,				// task name
+		jurassicTask,				// task
+		MED_PRIORITY,				// task priority
+		1,							// task count
+		newArgv); SWAP;					// task argument
 
-	// wait for park to get initialized...
-	//while (!parkMutex)				SWAP;
-	printf("\nStart Jurassic Park...");
+// wait for park to get initialized...
 
+	randSem = createSemaphore("Random Semaphore", COUNTING, 0); SWAP;
 
-	//?? create car, driver, and visitor tasks here
+	mailMutex = createSemaphore("Mail Mutex", BINARY, 1); SWAP;
+	mailSent = createSemaphore("Mail Sent Flag", BINARY, 0); SWAP;
+	mailAcquired = createSemaphore("Mail Acquired Flag", BINARY, 0); SWAP;
 
-	// create necessary semaphores	
-	randSem = createSemaphore("Random Semaphore", COUNTING, 0);										SWAP;
-	mailMutex = createSemaphore("Mail Mutex", BINARY, 1);											SWAP;
-	mailSent = createSemaphore("Mail Sent Flag", BINARY, 0);										SWAP;
-	mailAcquired = createSemaphore("Mail Acquired Flag", BINARY, 0);								SWAP;
-
-	parkOccupancy = createSemaphore("Park Occupancy Resource", COUNTING, MAX_IN_PARK);				SWAP;
-	museumOccupancy = createSemaphore("Museum Occupancy Resource", COUNTING, MAX_IN_MUSEUM);		SWAP;
+	parkOccupancy = createSemaphore("Park Occupancy Resource", COUNTING, MAX_IN_PARK); SWAP;
+	museumOccupancy = createSemaphore("Museum Occupancy Resource", COUNTING, MAX_IN_MUSEUM); SWAP;
 	rideTicket = createSemaphore("Ride Ticket Resource", COUNTING, MAX_TICKETS); SWAP;
 	giftShopOccupancy = createSemaphore("Gift Shop Occupancy Resource", COUNTING, MAX_IN_GIFTSHOP); SWAP;
 
-	workerNeeded = createSemaphore("Worker Needed Flag", COUNTING, 0);								SWAP;
-	rideTicketBoothMutex = createSemaphore("Ticket Booth Mutex", BINARY, 1);						SWAP;
-	rideTicketSellerNeeded = createSemaphore("Ride Ticket Seller Needed Flag", COUNTING, 0);		SWAP;
-	rideTicketBought = createSemaphore("Ride Ticket Bought Flag", COUNTING, 0);						SWAP;
-	rideTicketSold = createSemaphore("Ride Ticket Sold Flag", COUNTING, 0);							SWAP;
-	rideSeatOpen = createSemaphore("Ride Seat Open Resource", COUNTING, 0);							SWAP;
-	rideSeatTaken = createSemaphore("Ride Seat Taken", COUNTING, 0);								SWAP;
-	rideDriverNeeded = createSemaphore("Ride Driver Needed Flag", COUNTING, 0);						SWAP;
-	rideDriverSeatTaken = createSemaphore("Ride Driver Seat Taken", COUNTING, 0);					SWAP;
+	workerNeeded = createSemaphore("Worker Needed Flag", COUNTING, 0); SWAP;
+	rideTicketBoothMutex = createSemaphore("Ticket Booth Mutex", BINARY, 1); SWAP;
+	rideTicketSellerNeeded = createSemaphore("Ride Ticket Seller Needed Flag", COUNTING, 0); SWAP;
+	rideTicketBought = createSemaphore("Ride Ticket Bought Flag", COUNTING, 0); SWAP;
+	rideTicketSold = createSemaphore("Ride Ticket Sold Flag", COUNTING, 0); SWAP;
+	rideSeatOpen = createSemaphore("Ride Seat Open Resource", COUNTING, 0); SWAP;
+	rideSeatTaken = createSemaphore("Ride Seat Taken", COUNTING, 0); SWAP;
+	rideDriverNeeded = createSemaphore("Ride Driver Needed Flag", COUNTING, 0); SWAP;
+	rideDriverSeatTaken = createSemaphore("Ride Driver Seat Taken", COUNTING, 0); SWAP;
 
-	departingCar = createSemaphore("MBL Departing Car", COUNTING, 0);								SWAP;
-	departingCarDriver = createSemaphore("MBL Departing Car Driver", COUNTING, 0);					SWAP;
+	departingCar = createSemaphore("MBL Departing Car", COUNTING, 0); SWAP;
+	departingCarDriver = createSemaphore("MBL Departing Car Driver", COUNTING, 0); SWAP;
 
-	while (!parkMutex) SWAP;																		SWAP;
+	while (!parkMutex) SWAP; SWAP;
 
-	printf("\nStart Jurassic Park...");																SWAP;
+	printf("\nStart Jurassic Park..."); SWAP;
 
-	// create car tasks
-	for (int i = 0; i < NUM_CARS; i++)
-	{
-		sprintf(buf, "Car%i", i);									SWAP;
-		newArgv[0] = buf;											SWAP;
-		sprintf(buf2, "%i", i);										SWAP;
-		newArgv[1] = buf2;											SWAP;
-		createTask(buf, car, MED_PRIORITY, 2, newArgv);				SWAP;
+	for (int i = 0; i < NUM_CARS; i++) {
+		sprintf(buf, "Car%i", i); SWAP;
+		newArgv[0] = buf; SWAP;
+		sprintf(buf2, "%i", i); SWAP;
+		newArgv[1] = buf2; SWAP;
+		createTask(buf, car, MED_PRIORITY, 2, newArgv); SWAP;
 	}
 
-	// create driver tasks
-	for (int i = 0; i < NUM_DRIVERS; i++)
-	{
-		sprintf(buf, "Driver%i", i);								SWAP;
-		newArgv[0] = buf;											SWAP;
-		sprintf(buf2, "%i", i);										SWAP;
-		newArgv[1] = buf2;											SWAP;
-		createTask(buf, driver, MED_PRIORITY, 2, newArgv);			SWAP;
+	for (int i = 0; i < NUM_DRIVERS; i++) {
+		sprintf(buf, "Driver%i", i); SWAP;
+		newArgv[0] = buf; SWAP;
+		sprintf(buf2, "%i", i); SWAP;
+		newArgv[1] = buf2; SWAP;
+		createTask(buf, driver, MED_PRIORITY, 2, newArgv); SWAP;
 	}
 
-	// create visitor tasks
-	for (int i = 0; i < NUM_VISITORS; i++)
-	{
-		sprintf(buf, "Visitor%i", i);								SWAP;
-		newArgv[0] = buf;											SWAP;
-		sprintf(buf2, "%i", i);										SWAP;
-		newArgv[1] = buf2;											SWAP;
-		createTask(buf, visitor, MED_PRIORITY, 2, newArgv);			SWAP;
+	for (int i = 0; i < NUM_VISITORS; i++) {
+		sprintf(buf, "Visitor%i", i); SWAP;
+		newArgv[0] = buf; SWAP;
+		sprintf(buf2, "%i", i); SWAP;
+		newArgv[1] = buf2; SWAP;
+		createTask(buf, visitor, MED_PRIORITY, 2, newArgv); SWAP;
 	}
 
-	// create delta clock task
-	sprintf(buf, "Delta Clock");									SWAP;
-	newArgv[0] = buf;												SWAP;
-	createTask(buf, P3_dc, MED_PRIORITY, 1, newArgv);				SWAP;
+	sprintf(buf, "Delta Clock"); SWAP;
+	newArgv[0] = buf; SWAP;
+	createTask(buf, P3_dc, MED_PRIORITY, 1, newArgv); SWAP;
 
 	return 0;
 } // end project3
 
-
-// ***********************************************************************
 // ***********************************************************************
 // delta clock command
-int P3_dc(int argc, char* argv[])
-{
-	printf("\nDelta Clock");
-	// ?? Implement a routine to display the current delta clock contents
-	while (1)
-	{
-		semWait(tics10thsec);										SWAP;
-		tick(&Dclock);												SWAP;
+int P3_dc(int argc, char* argv[]) {
+	while (1) {
+		semWait(tics10thsec); SWAP;
+		tick(&Dclock); SWAP;
 	}
 	return 1;
 } // end CL3_dc
 
-
-
 // ***********************************************************************
 // display all pending events in the delta clock list
-void printDeltaClock(void)
-{
-	printf("\n******* Delta Clock *******");						SWAP;
-	Memo* next = Dclock;											SWAP;
-	while (next)
-	{
-		printf("/n  %s", next->event->name);						SWAP;
-		next = next->next;											SWAP;
+void printDeltaClock(void) {
+	printf("\n*** Delta Clock ***"); SWAP;
+	Memo* next = Dclock; SWAP;
+	while (next) {
+		printf("/n  %s", next->event->name); SWAP;
+		next = next->next; SWAP;
 	}
 	return;
 }
 
 // ***********************************************************************
-// ***********************************************************************
-// car task
-int car(int argc, char* argv[])
-{
-	char buf[32];													SWAP;
-
-	int carId = atoi(argv[1]);										SWAP;
-	sprintf(buf, "Car%i Seat Belt", carId);							SWAP;
-	Semaphore* seatBelt = createSemaphore(buf, COUNTING, 0);		SWAP;
-
-	sprintf(buf, "Car%i Seat Belt Driver", carId);					SWAP;
-	Semaphore* driverSeatBelt = createSemaphore(buf, COUNTING, 0);	SWAP;
-
-
-	while (1)
-	{
-		// acquire visitors
-		for (int i = 0; i < NUM_SEATS; i++)
-		{
-			// wait for the seat
-			semWait(fillSeat[carId]);								SWAP;		// seat ready to fill
-
-			// signal for a visitor
-			semSignal(rideSeatOpen);								SWAP;		// ride seat iopen for visitor
-
-			// wait for the visitor to reply
-			semWait(rideSeatTaken);									SWAP;		// ride seat taken 			
-			semSignal(seatFilled[carId]);							SWAP;		// seat filled with visitor
-		}
-
-		// acquire a driver		
-		semSignal(rideDriverNeeded);								SWAP;		// ride driver needed		
-		semSignal(workerNeeded);									SWAP;		// worker needed		
-		semWait(rideDriverSeatTaken);								SWAP;		// ride driver seat is taken
-
-		// start ride -> ride over		
-		sendLock(departingCar, seatBelt);							SWAP;		// 1st visitor ready to depart		
-		sendLock(departingCar, seatBelt);							SWAP;		// 2nd visitor ready to depart		
-		sendLock(departingCar, seatBelt);							SWAP;		// 3rd visitor ready to depart		
-		sendLock(departingCarDriver, driverSeatBelt);				SWAP;		// ride driver ready to depart		
-		semWait(rideOver[carId]);									SWAP;		// wait until ride is over
-
-		// ride over. release driver/visitors		
-		semSignal(driverSeatBelt);									SWAP;		// ride driver released		
-		semSignal(seatBelt);										SWAP;		// 1st visitor released		
-		semSignal(seatBelt);										SWAP;		// 2nd visitor released		
-		semSignal(seatBelt);										SWAP;		// 3rd visitor released									SWAP;
-	}
-	return 0;
-} // end car task
-
 // driver task
-int driver(int argc, char* argv[])
-{
-	int id = atoi(argv[1]);											SWAP;
-	while (1)
-	{
-		// sleep. wait for work
-		driverSleep(id);											SWAP;
-		//ptprintf("\n%10s -| workerNeeded", argv[0]);				SWAP;
-		semWait(workerNeeded);										SWAP;
+int driver(int argc, char* argv[]) {
+	int id = atoi(argv[1]); SWAP;
+	while (1) {
+		driSleep(id); SWAP;
+		ptprintf("\n%10s -| workerNeeded", argv[0]); SWAP;
+		semWait(workerNeeded); SWAP;
 
-		if (semTryLock(rideTicketSellerNeeded))						// ticket seller needed
-		{
-			semWait(rideTicketBoothMutex);							SWAP;
-			driverSellTicket(id);									SWAP;
-			//ptprintf("\n%10s -> rideTicketSold", argv[0]);			SWAP;
-			semSignal(rideTicketSold);								SWAP;
-			//ptprintf("\n%10s -| rideTicketBought", argv[0]);		SWAP;
-			semWait(rideTicketBought);								SWAP;
-			semSignal(rideTicketBoothMutex);						SWAP;
+		if (semTryLock(rideTicketSellerNeeded)) {
+			semWait(rideTicketBoothMutex); SWAP;
+			driSellTicket(id); SWAP;
+			ptprintf("\n%10s -> rideTicketSold", argv[0]); SWAP;
+			semSignal(rideTicketSold); SWAP;
+			ptprintf("\n%10s -| rideTicketBought", argv[0]); SWAP;
+			semWait(rideTicketBought); SWAP;
+			semSignal(rideTicketBoothMutex); SWAP;
 		}
-		else if (semTryLock(rideDriverNeeded))						// driver needed
-		{
-			//ptprintf("\n%10s -> rideDriverSeatTaken", argv[0]);		SWAP;
-			semSignal(rideDriverSeatTaken);							SWAP;
-			Semaphore* seatbelt = getLock(departingCarDriver);		SWAP;
-
-			// pull car id from the semaphore name
-			driverDrive(id, atoi(seatbelt->name + 3));				SWAP;
-
-			//ptprintf("\n%10s -| seatbelt", argv[0]);				SWAP;
-			semWait(seatbelt);										SWAP;
+		else if (semTryLock(rideDriverNeeded)) {
+			ptprintf("\n%10s -> rideDriverSeatTaken", argv[0]); SWAP;
+			semSignal(rideDriverSeatTaken); SWAP;
+			Semaphore* seatbelt = getLock(departingCarDriver); SWAP;
+			driDrive(id, atoi(seatbelt->name + 3)); SWAP;	// hacky-hack, pulling the car id from the semaphore name
+			ptprintf("\n%10s -| seatbelt", argv[0]); SWAP;
+			semWait(seatbelt); SWAP;
 		}
-		else														// you're fired ?
-		{
-			//ptprintf("\n%10s *** FIRED! ***", argv[0]);				SWAP;
+		else {
+			ptprintf("\n%10s *** PISSED ***", argv[0]); SWAP;
 		}
 	}
 	return 0;
 } // end driver task
 
-
-// ***********************************************************************
 // ***********************************************************************
 // visitor task
-int visitor(int argc, char* argv[])
-{
-	// visitor wait at the park gate
+int visitor(int argc, char* argv[]) {
 	waitRandom(50, randSem);
-	vWaitPark();												SWAP;
-	//ptprintf("\n%10s -| parkOccupancy", argv[0]);				SWAP;
-	semWait(parkOccupancy);										SWAP;
+	visWaitPark(); SWAP;
+	ptprintf("\n%10s -| parkOccupancy", argv[0]); SWAP;
+	semWait(parkOccupancy); SWAP;
 
-	// visitor enter park
-	vEnterPark();												SWAP;
+	visEnterPark(); SWAP;
 	waitRandom(30, randSem);
-	//ptprintf("\n%10s -| rideTicket", argv[0]);					SWAP;
-	semWait(rideTicket);										SWAP;
-	//ptprintf("\n%10s -> rideTicketSellerNeeded", argv[0]);		SWAP;
-	semSignal(rideTicketSellerNeeded);							SWAP;
-	//ptprintf("\n%10s -> workerNeeded", argv[0]);				SWAP;
-	semSignal(workerNeeded);									SWAP;
-	//ptprintf("\n%10s -| rideTicketSold", argv[0]);				SWAP;
-	semWait(rideTicketSold);									SWAP;
-	//ptprintf("\n%10s -> rideTicketBought", argv[0]);			SWAP;
-	semSignal(rideTicketBought);								SWAP;
+	ptprintf("\n%10s -| rideTicket", argv[0]); SWAP;
+	semWait(rideTicket); SWAP;
+	ptprintf("\n%10s -> rideTicketSellerNeeded", argv[0]); SWAP;
+	semSignal(rideTicketSellerNeeded); SWAP;
+	ptprintf("\n%10s -> workerNeeded", argv[0]); SWAP;
+	semSignal(workerNeeded); SWAP;
+	ptprintf("\n%10s -| rideTicketSold", argv[0]); SWAP;
+	semWait(rideTicketSold); SWAP;
+	ptprintf("\n%10s -> rideTicketBought", argv[0]); SWAP;
+	semSignal(rideTicketBought); SWAP;
 
-	// visitor wait for museum then enter
 	waitRandom(30, randSem);
-	vWaitMuseum();												SWAP;
-	//ptprintf("\n%10s -| museumOccupancy", argv[0]);				SWAP;
-	semWait(museumOccupancy);									SWAP;
-	vEnterMuseum();												SWAP;
+	visWaitMuseum(); SWAP;
+	ptprintf("\n%10s -| museumOccupancy", argv[0]); SWAP;
+	semWait(museumOccupancy); SWAP;
+	visEnterMuseum(); SWAP;
 
-	// visitor wait for ride then enter
 	waitRandom(30, randSem);
-	vWaitRide();												SWAP;
-	//ptprintf("\n%10s -> museumOccupancy", argv[0]);				SWAP;
-	semSignal(museumOccupancy);									SWAP;
-	//ptprintf("\n%10s -| rideSeatOpen", argv[0]);				SWAP;
-	semWait(rideSeatOpen);										SWAP;
-	vEnterRide();												SWAP;
-	//ptprintf("\n%10s -> rideTicket", argv[0]);					SWAP;
-	semSignal(rideTicket);										SWAP;
-	//ptprintf("\n%10s -> rideSeatTaken", argv[0]);				SWAP;
-	semSignal(rideSeatTaken);									SWAP;
-	//ptprintf("\n%10s -| departingCar", argv[0]);				SWAP;
-	semWait(getLock(departingCar));								SWAP;
+	visWaitRide(); SWAP;
+	ptprintf("\n%10s -> museumOccupancy", argv[0]); SWAP;
+	semSignal(museumOccupancy); SWAP;
+	ptprintf("\n%10s -| rideSeatOpen", argv[0]); SWAP;
+	semWait(rideSeatOpen); SWAP;
+	visEnterRide(); SWAP;
+	ptprintf("\n%10s -> rideTicket", argv[0]); SWAP;
+	semSignal(rideTicket); SWAP;
+	ptprintf("\n%10s -> rideSeatTaken", argv[0]); SWAP;
+	semSignal(rideSeatTaken); SWAP;
+	ptprintf("\n%10s -| departingCar", argv[0]); SWAP;
+	semWait(getLock(departingCar)); SWAP;
 
-	// visitor wait for gift shop, then enter
 	waitRandom(30, randSem);
-	vWaitGiftShop();											SWAP;
-	//ptprintf("\n%10s -| giftShopOccupancy", argv[0]);			SWAP;
-	semWait(giftShopOccupancy);									SWAP;
-	vEnterGiftShop();											SWAP;
+	visWaitGiftShop(); SWAP;
+	ptprintf("\n%10s -| giftShopOccupancy", argv[0]); SWAP;
+	semWait(giftShopOccupancy); SWAP;
+	visEnterGiftShop(); SWAP;
 
-	// visitor leave the park
 	waitRandom(30, randSem);
-	vLeavePark();												SWAP;
-	//ptprintf("\n%10s -> giftShopOccupancy", argv[0]);			SWAP;
-	semSignal(giftShopOccupancy);								SWAP;
-	//ptprintf("\n%10s -> parkOccupancy", argv[0]);				SWAP;
-	semSignal(parkOccupancy);									SWAP;
+	visLeavePark(); SWAP;
+	ptprintf("\n%10s -> giftShopOccupancy", argv[0]); SWAP;
+	semSignal(giftShopOccupancy); SWAP;
+	ptprintf("\n%10s -> parkOccupancy", argv[0]); SWAP;
+	semSignal(parkOccupancy); SWAP;
 
 	return 0;
 } // end visitor task
 
 // ***********************************************************************
-// ***********************************************************************
-// tasks functions
-void vWaitPark()
-{
-	semWait(parkMutex);														SWAP;
-	
-	myPark.numOutsidePark++;												SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vEnterPark()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numOutsidePark--;												SWAP;
-	myPark.numInPark++;														SWAP;
-	myPark.numInTicketLine++;												SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vWaitMuseum()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInTicketLine--;												SWAP;
-	myPark.numInMuseumLine++;												SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vEnterMuseum()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInMuseumLine--;												SWAP;
-	myPark.numInMuseum++;													SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vWaitRide()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInMuseum--;													SWAP;
-	myPark.numInCarLine++;													SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vEnterRide()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInCarLine--;													SWAP;
-	myPark.numInCars++;														SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vWaitGiftShop()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInCars--;														SWAP;
-	myPark.numRidesTaken++;													SWAP;
-	myPark.numInGiftLine++;													SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vEnterGiftShop()
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.numInGiftLine--;													SWAP;
-	myPark.numInGiftShop++;													SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void vLeavePark() {
-	semWait(parkMutex);														SWAP;	
-	myPark.numInGiftShop--;													SWAP;
-	myPark.numInPark--;														SWAP;
-	myPark.numExitedPark++;													SWAP;
-	semSignal(parkMutex);													SWAP;
+// car task
+int car(int argc, char* argv[]) {
+	char buf[32]; SWAP;
+	int carId = atoi(argv[1]); SWAP;
+	sprintf(buf, "Car%i Seat Belt", carId); SWAP;
+	Semaphore* seatBelt = createSemaphore(buf, COUNTING, 0); SWAP;
+	sprintf(buf, "Car%i Seat Belt Driver", carId); SWAP;
+	Semaphore* driverSeatBelt = createSemaphore(buf, COUNTING, 0); SWAP;
+	while (1) {
+		for (int i = 0; i < NUM_SEATS; i++) {
+			ptprintf("\n%10s -| carSeat[%i]", argv[0], i); SWAP;
+			semWait(fillSeat[carId]); SWAP;		// wait for available seat
+			ptprintf("\n%10s -> rideSeatOpen", argv[0]); SWAP;
+			semSignal(rideSeatOpen); SWAP;			// signal for visitor
+			ptprintf("\n%10s -| rideSeatTaken", argv[0]); SWAP;
+			semWait(rideSeatTaken); SWAP;				// wait for visitor to reply
+			ptprintf("\n%10s -> seatFilled", argv[0]); SWAP;
+			semSignal(seatFilled[carId]); SWAP;
+		}
+		ptprintf("\n%10s -> rideDriverNeeded", argv[0]); SWAP;
+		semSignal(rideDriverNeeded); SWAP;
+		ptprintf("\n%10s -> workerNeeded", argv[0]); SWAP;
+		semSignal(workerNeeded); SWAP;
+		ptprintf("\n%10s -| rideDriverSeatTaken", argv[0]); SWAP;
+		semWait(rideDriverSeatTaken); SWAP;
+
+		ptprintf("\n%10s sending seatbelt", argv[0]); SWAP;
+		sendLock(departingCar, seatBelt); SWAP;
+		ptprintf("\n%10s sending seatbelt", argv[0]); SWAP;
+		sendLock(departingCar, seatBelt); SWAP;
+		ptprintf("\n%10s sending seatbelt", argv[0]); SWAP;
+		sendLock(departingCar, seatBelt); SWAP;
+		ptprintf("\n%10s sending Driver seatbelt", argv[0]); SWAP;
+		sendLock(departingCarDriver, driverSeatBelt); SWAP;
+		ptprintf("\n%10s -| rideOver[%i]", argv[0], carId); SWAP;
+		semWait(rideOver[carId]); SWAP;
+		ptprintf("\n%10s -> driverSeatBelt", argv[0]); SWAP;
+		semSignal(driverSeatBelt); SWAP;
+		ptprintf("\n%10s -> seatBelt", argv[0]); SWAP;
+		semSignal(seatBelt); SWAP;
+		ptprintf("\n%10s -> seatBelt", argv[0]); SWAP;
+		semSignal(seatBelt); SWAP;
+		ptprintf("\n%10s -> seatBelt", argv[0]); SWAP;
+		semSignal(seatBelt); SWAP;
+	}
+	return 0;
+} // end car task
+
+void sendLock(Semaphore* lock, Semaphore* sem) {
+	// pass semaphore to car (1 at a time)
+	ptprintf("\n%10s mailbox fetch", taskName(getCurTask())); SWAP;
+	semWait(mailMutex); SWAP;				// wait for mailbox
+	ptprintf("\n%10s mailbox wait on lock", taskName(getCurTask())); SWAP;
+	semWait(lock); SWAP;				// wait for passenger request
+	ptprintf("\n%10s mailbox fill", taskName(getCurTask())); SWAP;
+	mail = sem; SWAP;					// put semaphore in mailbox
+	ptprintf("\n%10s mailbox signal sent", taskName(getCurTask())); SWAP;
+	semSignal(mailSent); SWAP;			// raise the mailbox flag
+	ptprintf("\n%10s mailbox wait recieved", taskName(getCurTask())); SWAP;
+	semWait(mailAcquired); SWAP;			// wait for delivery
+	ptprintf("\n%10s mailbox release", taskName(getCurTask())); SWAP;
+	semSignal(mailMutex); SWAP;			// release mailbox
 }
 
-void driverSellTicket(int id)
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.drivers[id] = -1;												SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void driverSleep(int id)
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.drivers[id] = 0;													SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-void driverDrive(int id, int carId)
-{
-	semWait(parkMutex);														SWAP;	
-	myPark.drivers[id] = carId + 1;											SWAP;
-	semSignal(parkMutex);													SWAP;
-}
-
-
-// ***********************************************************************
-// ***********************************************************************
-// peripherals
-void sendLock(Semaphore* lock, Semaphore* sem)
-{
-	// pass semaphore to car (1 at a time)	
-	semWait(mailMutex);													SWAP;		// wait for mailbox	
-	semWait(lock);														SWAP;		// wait for passenger request	
-	mail = sem;															SWAP;		// put semaphore in mailbox	
-	semSignal(mailSent);												SWAP;		// raise the mailbox flag	
-	semWait(mailAcquired);												SWAP;		// wait for delivery	
-	semSignal(mailMutex);												SWAP;		// release mailbox
-}
-
-Semaphore* getLock(Semaphore* lock)
-{
-	// get passenger semaphore	
-	semSignal(lock);													SWAP;	
-	semWait(mailSent);													SWAP;		// wait for mail	
-	Semaphore* ret = mail;												SWAP;		// get mail	
-	semSignal(mailAcquired);											SWAP;		// put flag down
+Semaphore* getLock(Semaphore* lock) {
+	// get passenger semaphore
+	ptprintf("\n%10s mailbox signal lock", taskName(getCurTask())); SWAP;
+	semSignal(lock); SWAP;
+	ptprintf("\n%10s mailbox wait on mail", taskName(getCurTask())); SWAP;
+	semWait(mailSent); SWAP;				// wait for mail
+	ptprintf("\n%10s mailbox receive mail", taskName(getCurTask())); SWAP;
+	Semaphore* ret = mail; SWAP;		// get mail
+	ptprintf("\n%10s mailbox signal acquired", taskName(getCurTask())); SWAP;
+	semSignal(mailAcquired); SWAP;		// put flag down
 	return ret;
 }
-//
-//void pnprintf(const char* fmt, ...)
-//{
-//	va_list args;								SWAP;
-//	va_start(args, fmt);						SWAP;
-//	//vprintf(fmt, args); SWAP;
-//	fflush(stdout);								SWAP;
-//	va_end(args);								SWAP;
-//}
-//void ptprintf(const char* fmt, ...)
-//{
-//	va_list args;								SWAP;
-//	va_start(args, fmt);						SWAP;
-//	//vprintf(fmt, args); SWAP;
-//	fflush(stdout);								SWAP;
-//	va_end(args);								SWAP;
-//}
 
-void waitRandom(int max, Semaphore* lock)
-{
+void visWaitPark() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (0) waiting at park", taskName(getCurTask())); SWAP;
+	myPark.numOutsidePark++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visEnterPark() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (1) waiting at ticket booth", taskName(getCurTask())); SWAP;
+	myPark.numOutsidePark--; SWAP;
+	myPark.numInPark++; SWAP;
+	myPark.numInTicketLine++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visWaitMuseum() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (2) waiting at museum", taskName(getCurTask())); SWAP;
+	myPark.numInTicketLine--; SWAP;
+	myPark.numInMuseumLine++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visEnterMuseum() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (3) in museum", taskName(getCurTask())); SWAP;
+	myPark.numInMuseumLine--; SWAP;
+	myPark.numInMuseum++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visWaitRide() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (4) waiting at ride", taskName(getCurTask())); SWAP;
+	myPark.numInMuseum--; SWAP;
+	myPark.numInCarLine++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visEnterRide() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (5) on ride", taskName(getCurTask())); SWAP;
+	myPark.numInCarLine--; SWAP;
+	myPark.numInCars++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visWaitGiftShop() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (6) waiting at gift shop", taskName(getCurTask())); SWAP;
+	myPark.numInCars--; SWAP;
+	myPark.numRidesTaken++; SWAP;
+	myPark.numInGiftLine++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visEnterGiftShop() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (7) in gift shop", taskName(getCurTask())); SWAP;
+	myPark.numInGiftLine--; SWAP;
+	myPark.numInGiftShop++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void visLeavePark() {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s (8) left park", taskName(getCurTask())); SWAP;
+	myPark.numInGiftShop--; SWAP;
+	myPark.numInPark--; SWAP;
+	myPark.numExitedPark++; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+
+void driSellTicket(int id) {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s selling ticket", taskName(getCurTask())); SWAP;
+	myPark.drivers[id] = -1; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void driSleep(int id) {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s sleeping", taskName(getCurTask())); SWAP;
+	myPark.drivers[id] = 0; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+void driDrive(int id, int carId) {
+	semWait(parkMutex); SWAP;
+	pnprintf("\n%10s driving car %i", taskName(getCurTask()), carId); SWAP;
+	myPark.drivers[id] = carId + 1; SWAP;
+	semSignal(parkMutex); SWAP;
+}
+
+void pnprintf(const char* fmt, ...) {
+	va_list args; SWAP;
+	va_start(args, fmt); SWAP;
+	//vprintf(fmt, args); SWAP;
+	fflush(stdout); SWAP;
+	va_end(args); SWAP;
+}
+void ptprintf(const char* fmt, ...) {
+	va_list args; SWAP;
+	va_start(args, fmt); SWAP;
+	//vprintf(fmt, args); SWAP;
+	fflush(stdout); SWAP;
+	va_end(args); SWAP;
+}
+
+void waitRandom(int max, Semaphore* lock) {
 	insert(&Dclock, newMemo(rand() % max, lock));
 	semWait(lock);
 }
 
 // ***********************************************************************
-// ***********************************************************************
-// print park
-int printPark(int argc, char* argv[])
-{
-	semWait(parkMutex);							SWAP;
-	semSignal(parkMutex);						SWAP;
+// driver task
+int printPark(int argc, char* argv[]) {
+	semWait(parkMutex); SWAP;
+	semSignal(parkMutex); SWAP;
 	return 0;
-} // end print park
-
-extern Semaphore* tics1sec;
-
-// ****************************************************************************
-// display time every tics1sec
-int timeTask(int argc, char* argv[])
-{
-	char svtime[64];						// ascii current time
-	while (1)
-	{
-		SEM_WAIT(tics1sec)
-			printf("\nTime = %s", myTime(svtime));
-	}
-	return 0;
-} // end timeTask
-
-
-//// ***********************************************************************
-//// monitor the delta clock task
-//int dcMonitorTask(int argc, char* argv[])
-//{
-//	int i, flg;
-//	char buf[32];
-//	// create some test times for event[0-9]
-//	int ttime[10] = {
-//		90, 300, 50, 170, 340, 300, 50, 300, 40, 110 };
-//
-//	for (i = 0; i < 10; i++)
-//	{
-//		sprintf(buf, "event[%d]", i);
-//		event[i] = createSemaphore(buf, BINARY, 0);
-//		insertDeltaClock(ttime[i], event[i]);
-//	}
-//	printDeltaClock();
-//
-//	while (numDeltaClock > 0)
-//	{
-//		SEM_WAIT(dcChange)
-//			flg = 0;
-//		for (i = 0; i < 10; i++)
-//		{
-//			if (event[i]->state == 1) {
-//				printf("\n  event[%d] signaled", i);
-//				event[i]->state = 0;
-//				flg = 1;
-//			}
-//		}
-//		if (flg) printDeltaClock();
-//	}
-//	printf("\nNo more events in Delta Clock");
-//
-//	// kill dcMonitorTask
-//	tcb[timeTaskID].state = S_EXIT;
-//	return 0;
-//} // end dcMonitorTask
-
-
-
-// ***********************************************************************
-// test delta clock
-//int P3_tdc(int argc, char* argv[])
-//{
-//	createTask( "DC Test",			// task name
-//		dcMonitorTask,		// task
-//		10,					// task priority
-//		argc,					// task arguments
-//		argv);
-//
-//	timeTaskID = createTask( "Time",		// task name
-//		timeTask,	// task
-//		10,			// task priority
-//		argc,			// task arguments
-//		argv);
-//	return 0;
-//} // end P3_tdc
+} // end driver task
