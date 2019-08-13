@@ -1,0 +1,4 @@
+
+Validate arguments...
+Setting upper memory limit to 0x3080
+Physical Address Space = 2 frames (0.3kb)

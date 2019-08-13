@@ -1,2 +1,7 @@
-﻿  os345mmu.c
+﻿  os345fat.c
+C:\Users\Dat Vu\source\repos\os345\OS345\os345fat.c(175,18): warning C4018:  '<': signed/unsigned mismatch
+C:\Users\Dat Vu\source\repos\os345\OS345\os345fat.c(192,18): warning C4018:  '<': signed/unsigned mismatch
+C:\Users\Dat Vu\source\repos\os345\OS345\os345fat.c(455,18): warning C4018:  '>': signed/unsigned mismatch
+C:\Users\Dat Vu\source\repos\os345\OS345\os345fat.c(493,12): warning C4018:  '>': signed/unsigned mismatch
+C:\Users\Dat Vu\source\repos\os345\OS345\os345fat.c(599,18): warning C4018:  '>': signed/unsigned mismatch
   OS345.vcxproj -> C:\Users\Dat Vu\source\repos\os345\Debug\OS345.exe

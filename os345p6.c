@@ -402,7 +402,8 @@ int P6_type(int argc, char* argv[])		// display file
 int P6_copy(int argc, char* argv[])		 	// copy file
 {
 	int error, nBytes, FDs, FDd;
-	char buffer[BYTES_PER_SECTOR];
+	//char buffer[BYTES_PER_SECTOR];
+	char buffer[BYTES_PER_SECTOR + 1];
 
 	if (!diskMounted)
 	{
@@ -1204,6 +1205,7 @@ int fmsTests(int test, bool debug)
 			{	sprintf(buf1, "file%d.txt", i);
 				if (debug) printf("\n  fmsDeleteFile(\"%s\")", buf1);
 				try(fmsDeleteFile(buf1));
+				if (i == 14) P6_dir(0, 0);
 			}
 			// go up one directory again
 			strcpy(buf2, "..");
@@ -1633,7 +1635,8 @@ int fmsMask(char* mask, char* name, char* ext)
    {
       if (mask[i] == '*') return 1;
       if (!mask[i] && (ext[j] == ' ')) return 1;
-      if ((mask[i] == '?') && (ext[i] != ' ')) continue;
+      //if ((mask[i] == '?') && (ext[i] != ' ')) continue;
+	  if ((mask[i] == '?') && (ext[j] != ' ')) continue;
       if ((mask[i] != toupper(ext[j])) && (mask[i] != tolower(ext[j]))) return 0;
    }
    return 1;

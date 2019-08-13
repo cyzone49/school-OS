@@ -41,8 +41,8 @@ extern int pageReads;
 extern int pageWrites;
 extern int clockRPT;					// RPT clock
 extern int clockUPT;					// UPT clock
-extern int cBigHand;
-extern int cLittleHand;
+
+FILE* fp;								// output file
 
 extern unsigned short int memory[];
 extern int getMemoryData(int);
@@ -172,22 +172,36 @@ int P4_initMemory(int argc, char* argv[])
 
 	tcb[curTask].RPT = 0x2400;
 
+	fp = fopen("dat-p4-output.txt", "w+");
+
 	printf("\nValidate arguments...");	// ?? validate arguments
+
+	fprintf(fp,"\nValidate arguments...");
+
 	if (!tcb[curTask].RPT)
 	{
 		printf("\nTask RPT Invalid!");
+		fprintf(fp, "\nTask RPT Invalid!");
 		return 1;
 	}
 	if (argc > 1) highAdr = INTEGER(argv[1]);
 	if (highAdr < 0x3000) highAdr = (highAdr<<6) + 0x3000;
 	if (highAdr > 0xf000) highAdr = 0xf000;
 	printf("\nSetting upper memory limit to 0x%04x", highAdr);
+	fprintf(fp, "\nSetting upper memory limit to 0x%04x", highAdr);
 
 	// init LC3 memory
 	initLC3Memory(LC3_MEM_FRAME, highAdr>>6);
+
 	printf("\nPhysical Address Space = %d frames (%0.1fkb)",
          (highAdr>>6)-LC3_MEM_FRAME, ((highAdr>>6)-LC3_MEM_FRAME)/8.0);
-	accessPage(0, 0, PAGE_INIT);
+	fprintf(fp, "\nPhysical Address Space = %d frames (%0.1fkb)",
+		(highAdr >> 6) - LC3_MEM_FRAME, ((highAdr >> 6) - LC3_MEM_FRAME) / 8.0);
+
+	accessPage(0, 0, PAGE_INIT);		
+
+	fclose(fp);
+
 	return 0;
 } // end P4_initMemory
 
@@ -228,6 +242,17 @@ int P4_virtualMemStats(int argc, char* argv[])
 	printf("\n     Page reads = %d", pageReads);
 	printf("\n    Page writes = %d", pageWrites);
 	printf("\nSwap page count = %d (%d kb)", nextPage, nextPage>>3);
+
+	fp = fopen("dat-p4-output.txt", "w+");
+	fprintf(fp, "\nMemory accesses = %d", memAccess);
+	fprintf(fp,"\n           hits = %d", memHits);
+	fprintf(fp,"\n         faults = %d", memPageFaults);
+	fprintf(fp,"\n           rate = %f%%", missRate);
+	fprintf(fp,"\n     Page reads = %d", pageReads);
+	fprintf(fp,"\n    Page writes = %d", pageWrites);
+	fprintf(fp,"\nSwap page count = %d (%d kb)", nextPage, nextPage >> 3);
+	fclose(fp);
+
 	return 0;
 } // end P4_virtualMemStats
 
